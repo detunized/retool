@@ -11,7 +11,6 @@ import (
 var application *t.Application
 var rootView *t.Flex
 var contentView *t.Flex
-var keyboardLogView *t.TextView
 
 type hotkeyInfo struct {
 	key     tc.Key
@@ -42,8 +41,7 @@ var hotkeys = []hotkeyInfo{
 }
 
 func makeHotkeyLine() t.Primitive {
-	flex := t.NewFlex()
-	flex.SetDirection(t.FlexColumn)
+	flex := NewFlexRow()
 
 	for _, hk := range hotkeys {
 		flex.AddItem(makeHotkeyButton(hk.key, hk.label), 0, 1, false)
@@ -130,13 +128,13 @@ func makeHashScreen() {
 		AddInputField("MD5", "", 0, nil, nil).
 		AddInputField("SHA1", "", 0, nil, nil)
 
-	hashView = t.NewFlex().
-		SetDirection(t.FlexRow).
-		AddItem(t.NewFlex().SetDirection(t.FlexColumn).AddItem(t.NewInputField().SetLabel("Input: "), 0, 1, true), 1, 0, true).
-		AddItem(nil, 1, 0, false).
+	hashView = NewFlexColumn().
+		AddItem(t.NewInputField().SetLabel("Input: "), 1, 0, true).
+		AddItem(t.NewBox(), 1, 0, false).
 		AddItem(t.NewTextView().SetText("md5()"), 1, 0, false).
-		AddItem(nil, 1, 0, false).
-		AddItem(t.NewTextView().SetText("sha1()"), 1, 0, false)
+		AddItem(t.NewBox(), 1, 0, false).
+		AddItem(t.NewTextView().SetText("sha1()"), 1, 0, false).
+		AddItem(t.NewBox(), 0, 1, false)
 }
 
 func showHashScreen() {
@@ -147,21 +145,28 @@ func showHashScreen() {
 // Key log screen
 //
 
+var keyboardLogScreen *t.TextView
+
+func makeKeyLogScreen() {
+	keyboardLogScreen = t.NewTextView()
+}
+
 func showKeyLogScreen() {
-	showScreen(keyboardLogView)
+	showScreen(keyboardLogScreen)
 }
 
 func main() {
 	application = t.NewApplication()
 
-	contentView = t.NewFlex()
-	keyboardLogView = t.NewTextView()
 	keyboardLog := ""
 
+	// Build screens
+	// TODO: Consider to make this lazy
 	makeHashScreen()
+	makeKeyLogScreen()
 
-	rootView = t.NewFlex().
-		SetDirection(t.FlexRow).
+	contentView = NewFlexRow()
+	rootView = NewFlexColumn().
 		AddItem(contentView, 0, 1, false).
 		AddItem(makeHotkeyLine(), 1, 0, true).
 		AddItem(makeHotkeyLine2(), 1, 0, false).
@@ -180,7 +185,7 @@ func main() {
 
 		// TODO: Trim the old entries
 		keyboardLog += fmt.Sprintf("%v\n", event.Name())
-		keyboardLogView.SetText(keyboardLog).ScrollToEnd()
+		keyboardLogScreen.SetText(keyboardLog).ScrollToEnd()
 
 		return event
 	})

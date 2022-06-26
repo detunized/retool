@@ -1,3 +1,3 @@
 .PHONY: default
 default:
-	go run main.go
+	go run *.go

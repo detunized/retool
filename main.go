@@ -2,6 +2,10 @@
 package main
 
 import (
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 
 	tc "github.com/gdamore/tcell/v2"
@@ -117,24 +121,57 @@ func showScreen(screen t.Primitive) {
 //
 
 var hashView *t.Flex
-var hashViewForm *t.Form
+
+type hashInfo struct {
+	name string
+	calc func([]byte) []byte
+	view *t.TextView
+}
+
+var hashes = []*hashInfo{
+	{
+		name: "MD5",
+		calc: func(b []byte) []byte {
+			h := md5.Sum(b)
+			return h[:]
+		},
+	},
+	{
+		name: "SHA1",
+		calc: func(b []byte) []byte {
+			h := sha1.Sum(b)
+			return h[:]
+		},
+	},
+	{
+		name: "SHA256",
+		calc: func(b []byte) []byte {
+			h := sha256.New()
+			return h.Sum(b)
+		},
+	},
+}
 
 func makeHashScreen() {
-	hashViewForm = t.NewForm().
-		AddInputField("Input", "", 0, nil, func(text string) {
-			hashViewForm.GetFormItem(1).(*t.InputField).SetText(fmt.Sprintf(`md5("%s")`, text))
-			hashViewForm.GetFormItem(2).(*t.InputField).SetText(fmt.Sprintf(`sha1("%s")`, text))
-		}).
-		AddInputField("MD5", "", 0, nil, nil).
-		AddInputField("SHA1", "", 0, nil, nil)
-
 	hashView = NewFlexColumn().
-		AddItem(t.NewInputField().SetLabel("Input: "), 1, 0, true).
-		AddItem(t.NewBox(), 1, 0, false).
-		AddItem(t.NewTextView().SetText("md5()"), 1, 0, false).
-		AddItem(t.NewBox(), 1, 0, false).
-		AddItem(t.NewTextView().SetText("sha1()"), 1, 0, false).
-		AddItem(t.NewBox(), 0, 1, false)
+		AddItem(t.NewInputField().SetLabel("Input: ").SetChangedFunc(updateHashes), 1, 0, true)
+
+	for _, h := range hashes {
+		h.view = t.NewTextView()
+		hashView.
+			AddItem(t.NewBox(), 1, 0, false).
+			AddItem(wrapWithLabel(h.view, h.name+": "), 1, 0, false)
+	}
+
+	hashView.AddItem(t.NewBox(), 0, 1, false)
+
+	updateHashes("")
+}
+
+func updateHashes(input string) {
+	for _, h := range hashes {
+		h.view.SetText(hex.EncodeToString(h.calc([]byte(input))))
+	}
 }
 
 func showHashScreen() {
@@ -168,10 +205,10 @@ func main() {
 	contentView = NewFlexRow()
 	rootView = NewFlexColumn().
 		AddItem(contentView, 0, 1, false).
-		AddItem(makeHotkeyLine(), 1, 0, true).
-		AddItem(makeHotkeyLine2(), 1, 0, false).
-		AddItem(makeHotkeyLine3(), 1, 0, false).
-		AddItem(makeHotkeyLine4(), 1, 0, false)
+		AddItem(makeHotkeyLine(), 1, 0, true)
+		// AddItem(makeHotkeyLine2(), 1, 0, false).
+		// AddItem(makeHotkeyLine3(), 1, 0, false).
+		// AddItem(makeHotkeyLine4(), 1, 0, false)
 
 	rootView.SetInputCapture(func(event *tc.EventKey) *tc.EventKey {
 		for _, hk := range hotkeys {

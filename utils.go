@@ -1,6 +1,8 @@
 package main
 
-import t "github.com/rivo/tview"
+import (
+	t "github.com/rivo/tview"
+)
 
 func NewFlex(direction int) *t.Flex {
 	f := t.NewFlex()
@@ -14,4 +16,22 @@ func NewFlexRow() *t.Flex {
 
 func NewFlexColumn() *t.Flex {
 	return NewFlex(t.FlexColumnCSS)
+}
+
+func getLabelWidth(label string) int {
+	return len(label)
+}
+
+func wrapWithLabel(p t.Primitive, label string) t.Primitive {
+	return NewFlexRow().
+		AddItem(
+			t.NewTextView().
+				SetText(label).
+				SetDynamicColors(true).
+				SetTextColor(t.Styles.SecondaryTextColor),
+			getLabelWidth(label),
+			0,
+			false,
+		).
+		AddItem(p, 0, 1, true)
 }

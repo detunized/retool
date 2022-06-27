@@ -9,6 +9,7 @@ import (
 	"hash"
 	"strings"
 
+	tc "github.com/gdamore/tcell/v2"
 	t "github.com/rivo/tview"
 )
 
@@ -19,10 +20,13 @@ type hmacInfo struct {
 }
 
 var hmacPane = struct {
-	view    *t.Flex
-	message string
-	key     string
-	hmacs   []*hmacInfo
+	view        *t.Flex
+	messageView *t.InputField
+	keyView     *t.InputField
+	tab         []t.Primitive
+	message     string
+	key         string
+	hmacs       []*hmacInfo
 }{
 	message: "",
 	key:     "",
@@ -55,10 +59,45 @@ func hmacWith(m, k []byte, hash func() hash.Hash) []byte {
 }
 
 func makeHmacPane() t.Primitive {
+	hmacPane.messageView = t.NewInputField().
+		SetLabel("Message: ").
+		SetChangedFunc(updateMessage)
+	hmacPane.keyView = t.NewInputField().
+		SetLabel("    Key: ").
+		SetChangedFunc(updateKey)
+
+	hmacPane.tab = append(hmacPane.tab, hmacPane.messageView, hmacPane.keyView)
+
 	hmacPane.view = NewFlexColumn().
-		AddItem(t.NewInputField().SetLabel("Message: ").SetChangedFunc(updateMessage), 1, 0, true).
-		AddItem(t.NewInputField().SetLabel("    Key: ").SetChangedFunc(updateKey), 1, 0, true).
+		AddItem(hmacPane.messageView, 1, 0, true).
+		AddItem(hmacPane.keyView, 1, 0, true).
 		AddItem(t.NewBox(), 1, 0, false)
+
+	// TODO: Move the Tab/Shift+Tab handling into some shared code
+	hmacPane.view.SetInputCapture(func(event *tc.EventKey) *tc.EventKey {
+		dir := 0
+		if event.Key() == tc.KeyTab {
+			dir = 1
+		} else if event.Key() == tc.KeyBacktab {
+			dir = -1
+		}
+
+		if dir != 0 {
+			index := 0
+
+			for i, t := range hmacPane.tab {
+				if t.HasFocus() {
+					index = (i + dir + len(hmacPane.tab)) % len(hmacPane.tab)
+					break
+				}
+			}
+
+			application.SetFocus(hmacPane.tab[index])
+			return nil
+		}
+
+		return event
+	})
 
 	// TODO: Merge code with hash.go
 

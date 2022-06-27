@@ -14,7 +14,13 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-var hashScreen = struct {
+type hashInfo struct {
+	name string
+	calc func([]byte) []byte
+	view *t.TextView
+}
+
+var hashPane = struct {
 	view   *t.Flex
 	hashes []*hashInfo
 }{
@@ -141,6 +147,7 @@ var hashScreen = struct {
 	},
 }
 
+// Go doesn't allow to parametrize on the array size
 func hashWith[R []byte | [16]byte | [20]byte | [28]byte | [32]byte | [48]byte | [64]byte](b []byte, hash func([]byte) R) []byte {
 	h := hash(b)
 	c := make([]byte, len(h))
@@ -150,43 +157,37 @@ func hashWith[R []byte | [16]byte | [20]byte | [28]byte | [32]byte | [48]byte | 
 	return c
 }
 
-type hashInfo struct {
-	name string
-	calc func([]byte) []byte
-	view *t.TextView
-}
-
-func makeHashScreen() t.Primitive {
-	hashScreen.view = NewFlexColumn().
+func makeHashPane() t.Primitive {
+	hashPane.view = NewFlexColumn().
 		AddItem(t.NewInputField().SetLabel("Input: ").SetChangedFunc(updateHashes), 1, 0, true).
 		AddItem(t.NewBox(), 1, 0, false)
 
 	maxNameLength := 0
-	for _, h := range hashScreen.hashes {
+	for _, h := range hashPane.hashes {
 		if len(h.name) > maxNameLength {
 			maxNameLength = len(h.name)
 		}
 	}
 
-	for _, h := range hashScreen.hashes {
+	for _, h := range hashPane.hashes {
 		h.view = t.NewTextView()
 		name := h.name
 		if len(name) < maxNameLength {
 			name = strings.Repeat(" ", maxNameLength-len(name)) + name
 		}
-		hashScreen.view.
+		hashPane.view.
 			AddItem(wrapWithLabel(h.view, name+": "), 1, 0, false)
 	}
 
-	hashScreen.view.AddItem(t.NewBox(), 0, 1, false)
+	hashPane.view.AddItem(t.NewBox(), 0, 1, false)
 
 	updateHashes("")
 
-	return hashScreen.view
+	return hashPane.view
 }
 
 func updateHashes(input string) {
-	for _, h := range hashScreen.hashes {
+	for _, h := range hashPane.hashes {
 		h.view.SetText(hex.EncodeToString(h.calc([]byte(input))))
 	}
 }

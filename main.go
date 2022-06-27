@@ -87,9 +87,10 @@ func showPane(pane t.Primitive) {
 func main() {
 	application = t.NewApplication()
 
-	// Build screens
+	// Build panes
 	// TODO: Consider to make this lazy
-	addPane("Hash", tc.KeyF1, makeHashScreen)
+	addPane("Hash", tc.KeyF1, makeHashPane)
+	addPane("HMAC", tc.KeyF2, makeHmacPane)
 
 	contentView = NewFlexRow()
 	rootView = NewFlexColumn().
@@ -113,7 +114,7 @@ func main() {
 		SetRoot(rootView, true).
 		EnableMouse(true)
 
-	showPane(panes[0].view)
+	showPane(panes[1].view)
 
 	if err := application.Run(); err != nil {
 		panic(err)

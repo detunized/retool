@@ -16,4 +16,5 @@ require (
 require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/rivo/tview v0.0.0-20220610163003-691f46d6f500
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 )

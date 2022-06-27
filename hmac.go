@@ -20,6 +20,7 @@ type hmacInfo struct {
 }
 
 var hmacPane = struct {
+	name        string
 	view        *t.Flex
 	messageView *t.InputField
 	keyView     *t.InputField
@@ -28,6 +29,7 @@ var hmacPane = struct {
 	key         string
 	hmacs       []*hmacInfo
 }{
+	name:    "HMAC",
 	message: "",
 	key:     "",
 	hmacs: []*hmacInfo{
@@ -58,7 +60,7 @@ func hmacWith(m, k []byte, hash func() hash.Hash) []byte {
 	return h.Sum(nil)
 }
 
-func makeHmacPane() t.Primitive {
+func makeHmacPane() (t.Primitive, string) {
 	hmacPane.messageView = t.NewInputField().
 		SetLabel("Message: ").
 		SetChangedFunc(updateMessage)
@@ -72,6 +74,8 @@ func makeHmacPane() t.Primitive {
 		AddItem(hmacPane.messageView, 1, 0, true).
 		AddItem(hmacPane.keyView, 1, 0, true).
 		AddItem(t.NewBox(), 1, 0, false)
+
+	decoratePane(hmacPane.view.Box, hmacPane.name)
 
 	// TODO: Move the Tab/Shift+Tab handling into some shared code
 	hmacPane.view.SetInputCapture(func(event *tc.EventKey) *tc.EventKey {
@@ -122,7 +126,7 @@ func makeHmacPane() t.Primitive {
 
 	updateHmacs()
 
-	return hmacPane.view
+	return hmacPane.view, hmacPane.name
 }
 
 func updateMessage(message string) {

@@ -21,9 +21,11 @@ type hashInfo struct {
 }
 
 var hashPane = struct {
+	name   string
 	view   *t.Flex
 	hashes []*hashInfo
 }{
+	name: "Hash",
 	hashes: []*hashInfo{
 		{
 			// TODO: Check for more variants at https://crccalc.com/
@@ -157,10 +159,12 @@ func hashWith[R []byte | [16]byte | [20]byte | [28]byte | [32]byte | [48]byte | 
 	return c
 }
 
-func makeHashPane() t.Primitive {
+func makeHashPane() (t.Primitive, string) {
 	hashPane.view = NewFlexColumn().
 		AddItem(t.NewInputField().SetLabel("Input: ").SetChangedFunc(updateHashes), 1, 0, true).
 		AddItem(t.NewBox(), 1, 0, false)
+
+	decoratePane(hashPane.view.Box, hashPane.name)
 
 	maxNameLength := 0
 	for _, h := range hashPane.hashes {
@@ -183,7 +187,7 @@ func makeHashPane() t.Primitive {
 
 	updateHashes("")
 
-	return hashPane.view
+	return hashPane.view, hashPane.name
 }
 
 func updateHashes(input string) {

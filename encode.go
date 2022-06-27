@@ -19,10 +19,12 @@ type encoderInfo struct {
 }
 
 var encodePane = struct {
+	name     string
 	view     *t.Flex
 	encoders []*encoderInfo
 	updating bool
 }{
+	name: "Encode",
 	encoders: []*encoderInfo{
 		{
 			name: "Text",
@@ -103,9 +105,10 @@ var encodePane = struct {
 	},
 }
 
-func makeEncodePane() t.Primitive {
+func makeEncodePane() (t.Primitive, string) {
 	p := &encodePane
 	p.view = NewFlexColumn()
+	decoratePane(p.view.Box, p.name)
 
 	for _, ei := range p.encoders {
 		ei := ei
@@ -126,7 +129,7 @@ func makeEncodePane() t.Primitive {
 	// Add clear box
 	p.view.AddItem(t.NewBox(), 0, 1, false)
 
-	return p.view
+	return p.view, p.name
 }
 
 func updateEncoded(source string, raw []byte, err error) {

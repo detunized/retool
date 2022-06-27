@@ -64,8 +64,8 @@ type paneInfo struct {
 
 var panes []paneInfo
 
-func addPane(name string, hotkey tc.Key, makePane func() t.Primitive) {
-	p := makePane()
+func addPane(hotkey tc.Key, makePane func() (t.Primitive, string)) {
+	p, name := makePane()
 	panes = append(panes, paneInfo{name: name, view: p})
 
 	// Add to hotkeys
@@ -89,12 +89,13 @@ func main() {
 
 	// Build panes
 	// TODO: Consider to make this lazy
-	addPane("Hash", tc.KeyF1, makeHashPane)
-	addPane("HMAC", tc.KeyF2, makeHmacPane)
-	addPane("Encode", tc.KeyF3, makeEncodePane)
+	addPane(tc.KeyF1, makeHashPane)
+	addPane(tc.KeyF2, makeHmacPane)
+	addPane(tc.KeyF3, makeEncodePane)
 
 	contentView = NewFlexRow()
 	rootView = NewFlexColumn().
+		AddItem(t.NewTextView().SetText("retool v0.0.1 beta =)"), 1, 0, false).
 		AddItem(contentView, 0, 1, false).
 		AddItem(makeHotkeyLine(), 1, 0, true)
 

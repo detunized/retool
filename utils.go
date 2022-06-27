@@ -10,6 +10,11 @@ func NewFlex(direction int) *t.Flex {
 	return f
 }
 
+func decoratePane(pane *t.Box, name string) {
+	pane.SetBorder(true)
+	pane.SetTitle(" " + name + " ")
+}
+
 func NewFlexRow() *t.Flex {
 	return NewFlex(t.FlexRowCSS)
 }

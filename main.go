@@ -91,6 +91,7 @@ func main() {
 	// TODO: Consider to make this lazy
 	addPane("Hash", tc.KeyF1, makeHashPane)
 	addPane("HMAC", tc.KeyF2, makeHmacPane)
+	addPane("Encode", tc.KeyF3, makeEncodePane)
 
 	contentView = NewFlexRow()
 	rootView = NewFlexColumn().
@@ -114,7 +115,7 @@ func main() {
 		SetRoot(rootView, true).
 		EnableMouse(true)
 
-	showPane(panes[1].view)
+	showPane(panes[2].view)
 
 	if err := application.Run(); err != nil {
 		panic(err)

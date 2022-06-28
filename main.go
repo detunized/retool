@@ -84,6 +84,17 @@ func showPane(pane t.Primitive) {
 	application.SetFocus(pane)
 }
 
+func showPaneByName(name string) {
+	for _, p := range panes {
+		if p.name == name {
+			showPane(p.view)
+			return
+		}
+	}
+
+	panic(fmt.Sprintf("Pane '%s' not found\n", name))
+}
+
 func main() {
 	application = t.NewApplication()
 
@@ -116,7 +127,7 @@ func main() {
 		SetRoot(rootView, true).
 		EnableMouse(true)
 
-	showPane(panes[2].view)
+	showPaneByName("Encode")
 
 	if err := application.Run(); err != nil {
 		panic(err)

@@ -123,6 +123,16 @@ var encodePane = struct {
 				return []byte(html.UnescapeString(s)), nil
 			},
 		},
+		{
+			name: "Punycode",
+			encode: func(b []byte) (string, error) {
+				return idna.ToASCII(string(b))
+			},
+			decode: func(s string) ([]byte, error) {
+				raw, err := idna.ToUnicode(s)
+				return []byte(raw), err
+			},
+		},
 	},
 }
 

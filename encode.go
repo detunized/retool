@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"net/url"
+	"strconv"
 	"strings"
 
 	tc "github.com/gdamore/tcell/v2"
@@ -99,6 +100,16 @@ var encodePane = struct {
 			},
 			decode: func(s string) ([]byte, error) {
 				raw, err := url.QueryUnescape(s)
+				return []byte(raw), err
+			},
+		},
+		{
+			name: "Escape/C",
+			encode: func(b []byte) (string, error) {
+				return removeQuotes(strconv.Quote(string(b))), nil
+			},
+			decode: func(s string) ([]byte, error) {
+				raw, err := strconv.Unquote(`"` + s + `"`)
 				return []byte(raw), err
 			},
 		},

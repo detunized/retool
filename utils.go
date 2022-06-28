@@ -40,3 +40,7 @@ func wrapWithLabel(p t.Primitive, label string) t.Primitive {
 		).
 		AddItem(p, 0, 1, true)
 }
+
+func removeQuotes(s string) string {
+	return s[1 : len(s)-1]
+}

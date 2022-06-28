@@ -4,6 +4,7 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
+	"html"
 	"net/url"
 	"strconv"
 	"strings"
@@ -94,7 +95,7 @@ var encodePane = struct {
 			},
 		},
 		{
-			name: "URL",
+			name: "Escape/URL",
 			encode: func(b []byte) (string, error) {
 				return url.QueryEscape(string(b)), nil
 			},
@@ -111,6 +112,15 @@ var encodePane = struct {
 			decode: func(s string) ([]byte, error) {
 				raw, err := strconv.Unquote(`"` + s + `"`)
 				return []byte(raw), err
+			},
+		},
+		{
+			name: "Escape/HTML",
+			encode: func(b []byte) (string, error) {
+				return html.EscapeString(string(b)), nil
+			},
+			decode: func(s string) ([]byte, error) {
+				return []byte(html.UnescapeString(s)), nil
 			},
 		},
 	},

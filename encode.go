@@ -11,6 +11,7 @@ import (
 
 	tc "github.com/gdamore/tcell/v2"
 	t "github.com/rivo/tview"
+	"golang.org/x/net/idna"
 )
 
 type encoderInfo struct {
@@ -154,11 +155,20 @@ func makeEncodePane() (t.Primitive, string) {
 				updateEncoded(ei.name, b, err)
 			})
 
-		p.view.AddItem(ei.view, 1, 0, true)
+		p.view.AddItem(ei.view, 1, 0, false)
 	}
 
 	// Add clear box
-	p.view.AddItem(t.NewBox(), 0, 1, false)
+	//p.view.AddItem(t.NewBox(), 0, 1, false)
+	f := t.NewForm()
+	f.SetBorder(true)
+	f.SetTitle("Encode")
+
+	for _, ei := range p.encoders {
+		f.AddInputField(ei.name, "", 0, nil, nil)
+	}
+
+	p.view.AddItem(f, 0, 1, true)
 
 	return p.view, p.name
 }

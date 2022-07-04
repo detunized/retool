@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math"
 
 	"github.com/maja42/goval"
@@ -82,14 +81,5 @@ func updateCalc(text string) {
 }
 
 func setCalcFormField(label string, text string) {
-	i := calcPane.view.GetFormItemByLabel(label)
-	if i == nil {
-		log.Panicf("Form field '%s' not found", label)
-	}
-
-	if f, ok := i.(*t.InputField); ok {
-		f.SetText(text)
-	} else {
-		log.Panicf("Form field '%s' is not an input field", label)
-	}
+	setFormField(calcPane.view, label, text)
 }

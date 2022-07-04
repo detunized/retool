@@ -104,6 +104,7 @@ func main() {
 	addPane(tc.KeyF2, makeHmacPane)
 	addPane(tc.KeyF3, makeEncodePane)
 	addPane(tc.KeyF4, makeCalcPane)
+	addPane(tc.KeyF5, makeIeeePane)
 
 	contentView = NewFlexRow()
 	rootView = NewFlexColumn().
@@ -128,7 +129,7 @@ func main() {
 		SetRoot(rootView, true).
 		EnableMouse(true)
 
-	showPaneByName("Calc")
+	showPaneByName("IEEE 754")
 
 	if err := application.Run(); err != nil {
 		panic(err)

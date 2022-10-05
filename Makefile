@@ -4,4 +4,4 @@ run:
 
 .PHONY: watch
 watch:
-	watchman-make -p '*.go' -r 'make run'
+	watchman-make -p '**/*.go' -r 'make run'

@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/detunized/retool/float"
 	tc "github.com/gdamore/tcell/v2"
 	t "github.com/rivo/tview"
 )
@@ -105,6 +106,10 @@ func main() {
 	addPane(tc.KeyF3, makeEncodePane)
 	addPane(tc.KeyF4, makeCalcPane)
 	addPane(tc.KeyF5, makeIeeePane)
+	addPane(tc.KeyF6, func() (t.Primitive, string) {
+		p := float.MakePane()
+		return p.GetView(), p.GetName()
+	})
 
 	contentView = NewFlexRow()
 	rootView = NewFlexColumn().
@@ -129,7 +134,7 @@ func main() {
 		SetRoot(rootView, true).
 		EnableMouse(true)
 
-	showPaneByName("IEEE 754")
+	showPaneByName("Float")
 
 	if err := application.Run(); err != nil {
 		panic(err)

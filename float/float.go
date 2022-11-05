@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	label_Regular   = "Regular"
-	label_HexLE     = "Hex/LE"
-	label_HexBE     = "Hex/BE"
-	label_HexUint64 = "Hex/uint64"
-	label_AddSpaces = "Add Spaces"
+	labelRegular   = "Regular"
+	labelHexLE     = "Hex/LE"
+	labelHexBE     = "Hex/BE"
+	labelHexUint64 = "Hex/uint64"
+	labelAddSpaces = "Add Spaces"
 
 	hexSeparator         = " "
 	allowedHexSeparators = " "
@@ -26,6 +26,7 @@ type floatPane struct {
 	updating   bool
 	lastInput  string
 	lastSource *codec
+	addSpaces  bool
 }
 
 type codec struct {
@@ -35,11 +36,13 @@ type codec struct {
 	width  int
 }
 
-var instance = &floatPane{}
+var instance = &floatPane{
+	addSpaces: true,
+}
 
 var codecs = []*codec{
 	{
-		name: label_Regular,
+		name: labelRegular,
 		encode: func(f float64) (string, error) {
 			return fmt.Sprintf("%f", f), nil
 		},
@@ -48,18 +51,18 @@ var codecs = []*codec{
 		},
 	},
 	{
-		name: label_HexLE,
+		name: labelHexLE,
 		encode: func(f float64) (string, error) {
-			return util.Float64ToHexLE(f, hexSeparator), nil
+			return util.Float64ToHexLE(f, instance.getCurrentSeparator()), nil
 		},
 		decode: func(s string) (float64, error) {
 			return util.HexToFloat64LE(s, allowedHexSeparators)
 		},
 	},
 	{
-		name: label_HexBE,
+		name: labelHexBE,
 		encode: func(f float64) (string, error) {
-			return util.Float64ToHexBE(f, hexSeparator), nil
+			return util.Float64ToHexBE(f, instance.getCurrentSeparator()), nil
 		},
 		decode: func(s string) (float64, error) {
 			u, err := util.HexToUint64LE(s, allowedHexSeparators)
@@ -71,7 +74,7 @@ var codecs = []*codec{
 		width: 8*2 + 7,
 	},
 	{
-		name: label_HexUint64,
+		name: labelHexUint64,
 		encode: func(f float64) (string, error) {
 			return "0x" + util.Float64ToHexBE(f, ""), nil
 		},
@@ -113,6 +116,11 @@ func MakePane() util.Pane {
 		})
 	}
 
+	p.view.AddCheckbox(labelAddSpaces, p.addSpaces, func(checked bool) {
+		p.addSpaces = checked
+		p.updateInput()
+	})
+
 	util.DecoratePane(p.view.Box, p.GetName())
 
 	return instance
@@ -145,4 +153,11 @@ func (p *floatPane) updateInput() {
 	} else {
 		p.view.SetTitle("Error")
 	}
+}
+
+func (p *floatPane) getCurrentSeparator() string {
+	if instance.addSpaces {
+		return hexSeparator
+	}
+	return ""
 }

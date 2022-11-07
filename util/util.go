@@ -114,7 +114,7 @@ func HexToUint64BE(hexStr string, strip string) (uint64, error) {
 	return hexToUint64(hexStr, strip, binary.BigEndian)
 }
 
-func hexToUint64(hexStr string, strip string, bo binary.ByteOrder) (uint64, error) {
+func HexToBytes(hexStr string, strip string) ([]byte, error) {
 	var s strings.Builder
 	for _, r := range hexStr {
 		if strings.ContainsRune(strip, r) {
@@ -124,7 +124,11 @@ func hexToUint64(hexStr string, strip string, bo binary.ByteOrder) (uint64, erro
 		s.WriteRune(r)
 	}
 
-	b, err := hex.DecodeString(s.String())
+	return hex.DecodeString(s.String())
+}
+
+func hexToUint64(hexStr string, strip string, bo binary.ByteOrder) (uint64, error) {
+	b, err := HexToBytes(hexStr, strip)
 	if err != nil {
 		return 0, err
 	}

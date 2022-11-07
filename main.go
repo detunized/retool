@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/detunized/retool/shape"
 
 	"github.com/detunized/retool/float"
 	tc "github.com/gdamore/tcell/v2"
@@ -110,6 +111,10 @@ func main() {
 		p := float.MakePane()
 		return p.GetView(), p.GetName()
 	})
+	addPane(tc.KeyF7, func() (t.Primitive, string) {
+		p := shape.MakePane()
+		return p.GetView(), p.GetName()
+	})
 
 	contentView = NewFlexRow()
 	rootView = NewFlexColumn().
@@ -134,7 +139,7 @@ func main() {
 		SetRoot(rootView, true).
 		EnableMouse(true)
 
-	showPaneByName("Float")
+	showPaneByName("Shape")
 
 	if err := application.Run(); err != nil {
 		panic(err)

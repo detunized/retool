@@ -8,6 +8,7 @@ import (
 	"math"
 	"strings"
 
+	tc "github.com/gdamore/tcell/v2"
 	t "github.com/rivo/tview"
 )
 
@@ -27,13 +28,25 @@ func DecoratePane(view *t.Box, name string) {
 }
 
 func SetFormField(form *t.Form, label string, text string) {
+	OnFormField(form, label, func(field *t.InputField) {
+		field.SetText(text)
+	})
+}
+
+func SetFormFieldBackgroundColor(form *t.Form, label string, color tc.Color) {
+	OnFormField(form, label, func(field *t.InputField) {
+		field.SetBackgroundColor(color)
+	})
+}
+
+func OnFormField(form *t.Form, label string, fn func(field *t.InputField)) {
 	i := form.GetFormItemByLabel(label)
 	if i == nil {
 		log.Panicf("Form field '%s' not found", label)
 	}
 
 	if f, ok := i.(*t.InputField); ok {
-		f.SetText(text)
+		fn(f)
 	} else {
 		log.Panicf("Form field '%s' is not an input field", label)
 	}

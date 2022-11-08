@@ -1,9 +1,11 @@
 package shape
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/detunized/retool/util"
 	t "github.com/rivo/tview"
+	"math"
 	"strconv"
 )
 
@@ -34,7 +36,7 @@ func MakePane() util.Pane {
 	p := instance
 	p.view = t.NewForm()
 
-	p.view.AddInputField(labelHex, "7c ad dd f6 03", 0, nil, func(text string) {
+	p.view.AddInputField(labelHex, "", 0, nil, func(text string) {
 		p.updateInput(labelHex, text)
 	})
 
@@ -59,35 +61,56 @@ func (p *shapePane) updateInput(sourceName string, input string) {
 
 	switch sourceName {
 	case labelHex:
-		b, err := util.HexToBytes(input, allowedHexSeparators)
-		if err == nil {
-			varInt, err := decodeVarInt(b)
+		{
+			b, err := util.HexToBytes(input, allowedHexSeparators)
+			s := ""
 			if err == nil {
-				util.SetFormField(p.view, labelInt, strconv.Itoa(varInt))
+				varInt, err := decodeVarInt(b)
+				if err == nil {
+					s = strconv.FormatInt(varInt, 10)
+				} else {
+					s = err.Error()
+				}
+			} else {
+				s = err.Error()
 			}
+			util.SetFormField(p.view, labelInt, s)
 		}
 		break
 	case labelInt:
-		i, err := strconv.ParseInt(input, 0, 32)
-		if err == nil {
-			util.SetFormField(p.view, labelHex, util.BytesToHex(encodeVarInt(int(i)), hexSeparator))
+		{
+			i, err := strconv.ParseInt(input, 0, 64)
+			s := ""
+			if err == nil {
+				s = util.BytesToHex(encodeVarInt(i), hexSeparator)
+			} else {
+				s = err.Error()
+			}
+			util.SetFormField(p.view, labelHex, s)
 		}
 		break
 	}
 }
 
-func decodeVarInt(bytes []byte) (int, error) {
-	if len(bytes) == 0 || len(bytes) > 5 {
+func decodeVarInt(bytes []byte) (int64, error) {
+	if len(bytes) == 0 || len(bytes) > 9 {
 		return 0, fmt.Errorf("invalid length: %v", len(bytes))
 	}
 
+	// Double
+	if bytes[0] == 0x80 {
+		u := binary.LittleEndian.Uint64(bytes[1:9])
+		f := math.Float64frombits(u)
+		return int64(f), nil
+	}
+
 	negative := (bytes[0] & 64) != 0
-	n := int(bytes[0] & 31)
+	n := int64(bytes[0] & 31)
 
 	if (bytes[0] & 32) != 0 {
 		shift := 5
 		for i := 1; i < len(bytes); i++ {
-			n |= int(bytes[i]&127) << shift
+			n |= int64(bytes[i]&127) << shift
 			shift += 7
 			if bytes[i] < 128 {
 				break
@@ -102,9 +125,21 @@ func decodeVarInt(bytes []byte) (int, error) {
 	return n, nil
 }
 
-func encodeVarInt(n int) []byte {
+func encodeVarInt(n64 int64) []byte {
 	bytes := make([]byte, 1)
 
+	// Store as double
+	if (uint64(n64) & 0xffff_ffff_0000_0000) != 0 {
+		bytes := make([]byte, 9)
+		bytes[0] = 0x80
+
+		f64 := math.Float64bits(float64(n64))
+		binary.LittleEndian.PutUint64(bytes[1:9], f64)
+
+		return bytes
+	}
+
+	n := int32(n64)
 	if n < 0 {
 		bytes[0] |= 64
 		n = -n
@@ -115,11 +150,11 @@ func encodeVarInt(n int) []byte {
 		bytes[0] |= 32
 	}
 
-	n = int(uint(n) >> 5)
+	n = int32(uint32(n) >> 5)
 	if n > 0 {
 		for {
 			bytes = append(bytes, byte(n&127))
-			n = int(uint(n) >> 7)
+			n = int32(uint32(n) >> 7)
 			if n == 0 {
 				break
 			}

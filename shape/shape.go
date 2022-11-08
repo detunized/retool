@@ -18,8 +18,8 @@ const (
 )
 
 type shapePane struct {
-	view     *t.Form
-	updating bool
+	view        *t.Form
+	varIntGroup *util.CodecGroup[int64]
 }
 
 var instance = &shapePane{}
@@ -36,69 +36,66 @@ func MakePane() util.Pane {
 	p := instance
 	p.view = t.NewForm()
 
-	p.view.AddInputField(labelHex, "", 0, nil, func(text string) {
-		p.updateInput(labelHex, text)
-	})
+	p.varIntGroup = &util.CodecGroup[int64]{
+		View: p.view,
+		Codecs: []util.Codec[int64]{
+			{
+				Name:   labelHex,
+				Encode: encodeToHex,
+				Decode: decodeFromHex,
+			},
+			{
+				Name:   labelInt,
+				Encode: encodeToInt,
+				Decode: decodeFromInt,
+			},
+		},
+		SetError: func(message string) {
+			util.DecoratePane(p.view.Box, "Error: "+message)
+		},
+		ClearError: func() {
+			util.DecoratePane(p.view.Box, p.GetName())
+		},
+	}
 
-	p.view.AddInputField(labelInt, "", 0, nil, func(text string) {
-		p.updateInput(labelInt, text)
-	})
-
-	util.DecoratePane(p.view.Box, p.GetName())
+	p.varIntGroup.InitView()
+	p.varIntGroup.ClearError()
 
 	return instance
 }
 
-func (p *shapePane) updateInput(sourceName string, input string) {
-	if p.updating {
-		return
+func encodeToHex(n int64) (string, error) {
+	bytes := encodeVarInt(n)
+	return util.BytesToHex(bytes, hexSeparator), nil
+}
+
+func decodeFromHex(s string) (int64, error) {
+	bytes, err := util.HexToBytes(s, allowedHexSeparators)
+	if err != nil {
+		return 0, err
 	}
 
-	p.updating = true
-	defer func() {
-		p.updating = false
-	}()
+	return decodeVarInt(bytes)
+}
 
-	switch sourceName {
-	case labelHex:
-		{
-			b, err := util.HexToBytes(input, allowedHexSeparators)
-			s := ""
-			if err == nil {
-				varInt, err := decodeVarInt(b)
-				if err == nil {
-					s = strconv.FormatInt(varInt, 10)
-				} else {
-					s = err.Error()
-				}
-			} else {
-				s = err.Error()
-			}
-			util.SetFormField(p.view, labelInt, s)
-		}
-		break
-	case labelInt:
-		{
-			i, err := strconv.ParseInt(input, 0, 64)
-			s := ""
-			if err == nil {
-				s = util.BytesToHex(encodeVarInt(i), hexSeparator)
-			} else {
-				s = err.Error()
-			}
-			util.SetFormField(p.view, labelHex, s)
-		}
-		break
-	}
+func encodeToInt(n int64) (string, error) {
+	return strconv.FormatInt(n, 10), nil
+}
+
+func decodeFromInt(s string) (int64, error) {
+	return strconv.ParseInt(s, 0, 64)
 }
 
 func decodeVarInt(bytes []byte) (int64, error) {
-	if len(bytes) == 0 || len(bytes) > 9 {
-		return 0, fmt.Errorf("invalid length: %v", len(bytes))
+	if len(bytes) == 0 {
+		return 0, fmt.Errorf("bytes are empty")
 	}
 
 	// Double
 	if bytes[0] == 0x80 {
+		if len(bytes) != 9 {
+			return 0, fmt.Errorf("must be exactly 9 bytes, got %v", len(bytes))
+		}
 		u := binary.LittleEndian.Uint64(bytes[1:9])
 		f := math.Float64frombits(u)
 		return int64(f), nil
@@ -106,13 +103,14 @@ func decodeVarInt(bytes []byte) (int64, error) {
 
 	negative := (bytes[0] & 64) != 0
 	n := int64(bytes[0] & 31)
+	index := 0
 
 	if (bytes[0] & 32) != 0 {
 		shift := 5
-		for i := 1; i < len(bytes); i++ {
-			n |= int64(bytes[i]&127) << shift
+		for index = 1; index < len(bytes); index++ {
+			n |= int64(bytes[index]&127) << shift
 			shift += 7
-			if bytes[i] < 128 {
+			if bytes[index] < 128 {
 				break
 			}
 		}
@@ -120,6 +118,10 @@ func decodeVarInt(bytes []byte) (int64, error) {
 
 	if negative {
 		n = -n
+	}
+
+	if index != len(bytes)-1 {
+		return 0, fmt.Errorf("%v too many bytes", len(bytes)-index-1)
 	}
 
 	return n, nil

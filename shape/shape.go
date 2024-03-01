@@ -7,11 +7,14 @@ import (
 	t "github.com/rivo/tview"
 	"math"
 	"strconv"
+	"time"
 )
 
 const (
-	labelHex = "Hex"
-	labelInt = "Int"
+	labelHex    = "Hex"
+	labelInt    = "Int"
+	labelString = "String"
+	labelHash   = "Hash"
 
 	hexSeparator         = " "
 	allowedHexSeparators = " "
@@ -60,6 +63,30 @@ func MakePane() util.Pane {
 
 	p.varIntGroup.InitView()
 	p.varIntGroup.ClearError()
+
+	hashTimer := time.NewTimer(time.Hour * 1_000_000)
+	hashString := ""
+
+	counter := 0
+	go func() {
+		for {
+			<-hashTimer.C
+			counter++
+			h := CalcStringHashInt([]byte(hashString))
+			s := fmt.Sprintf("[%v] S: %v | U: %v | HEX: %x", counter, int32(h), h, h)
+			util.SetFormField(p.view, labelHash, s)
+		}
+	}()
+
+	p.view.AddInputField(labelString, "", 0, nil, func(text string) {
+		hashTimer.Stop()
+		hashTimer.Reset(1000 * time.Millisecond)
+		hashString = text
+	})
+
+	p.view.AddInputField(labelHash, "", 0, func(textToCheck string, lastChar rune) bool {
+		return false
+	}, nil)
 
 	return instance
 }
@@ -131,7 +158,7 @@ func encodeVarInt(n64 int64) []byte {
 	bytes := make([]byte, 1)
 
 	// Store as double
-	if (uint64(n64) & 0xffff_ffff_0000_0000) != 0 {
+	if n64 != int64(int32(n64)) {
 		bytes := make([]byte, 9)
 		bytes[0] = 0x80
 

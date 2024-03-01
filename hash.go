@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
+	"github.com/detunized/retool/shape"
 	"hash/crc32"
 	"strings"
 
@@ -145,6 +146,10 @@ var hashPane = struct {
 			calc: func(b []byte) []byte {
 				return hashWith(b, blake2b.Sum512)
 			},
+		},
+		{
+			name: "SHAPE/AG3",
+			calc: shape.CalcStringHashBytes,
 		},
 	},
 }
